@@ -20,10 +20,14 @@
 ### Структура проекта
 /
 ├── index.html          ← Главная страница (SPA)
+
 ├── admin.html          ← Админ-панель
+
 ├── styles/
 │   └── main.css
+
 ├── README.md
+
 └── .nojekyll
 
 ---
