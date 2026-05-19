@@ -1,1 +1,263 @@
+:root {
+  --primary: #0066cc;
+  --primary-dark: #0052a3;
+  --bg: #f8f9fa;
+  --card-bg: #ffffff;
+  --text: #222222;
+  --text-light: #555;
+  --border: #ddd;
+}
 
+[data-theme="dark"] {
+  --primary: #4da6ff;
+  --bg: #121212;
+  --card-bg: #1e1e1e;
+  --text: #eeeeee;
+  --text-light: #bbbbbb;
+  --border: #333;
+}
+
+[data-theme="sakhalin"] {
+  --primary: #00aaff;
+  --bg: #0b1e3d;
+  --card-bg: #132e55;
+  --text: #e0f0ff;
+  --text-light: #a0c0e0;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+}
+
+/* Навигация */
+.main-nav {
+  background: var(--primary);
+  color: white;
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.nav-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-size: 1.6rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.menu a {
+  color: white;
+  text-decoration: none;
+  margin-left: 2rem;
+  font-weight: 500;
+  transition: opacity 0.2s;
+}
+
+.menu a:hover {
+  opacity: 0.8;
+}
+
+.burger {
+  display: none;
+  font-size: 2rem;
+  cursor: pointer;
+}
+
+.mobile-menu {
+  display: none;
+  background: var(--primary);
+  padding: 1rem;
+}
+
+.mobile-menu a {
+  display: block;
+  padding: 15px;
+  color: white;
+  text-decoration: none;
+  font-size: 1.1rem;
+}
+
+/* Контент */
+.content {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Header */
+header {
+  text-align: center;
+  padding: 3rem 1rem;
+  background: linear-gradient(135deg, var(--primary), #0099ff);
+  color: white;
+  border-radius: 0 0 20px 20px;
+}
+
+header h1 {
+  font-size: 2.4rem;
+  margin-bottom: 10px;
+}
+
+.subtitle {
+  font-size: 1.3rem;
+  opacity: 0.95;
+}
+
+/* Карточки материалов */
+.materials-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 24px;
+  padding: 2rem 0;
+}
+
+.material-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.material-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+}
+
+.material-card img {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.material-card h3 {
+  padding: 15px 15px 5px;
+  font-size: 1.3rem;
+}
+
+.price {
+  padding: 0 15px;
+  font-size: 1.35rem;
+  font-weight: bold;
+  color: var(--primary);
+}
+
+.material-card p {
+  padding: 0 15px 15px;
+  color: var(--text-light);
+}
+
+.material-card button {
+  width: 100%;
+  padding: 14px;
+  background: var(--primary);
+  color: white;
+  border: none;
+  font-size: 1.05rem;
+  cursor: pointer;
+}
+
+/* Блок с маршрутом */
+.route-card {
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 25px;
+  margin: 25px 0;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+}
+
+.route-card h2 {
+  margin-bottom: 20px;
+  color: var(--primary);
+}
+
+.address-input-group input {
+  width: 100%;
+  padding: 16px 20px 16px 55px;
+  border: 2px solid var(--border);
+  border-radius: 12px;
+  font-size: 1.1rem;
+}
+
+.btn-route {
+  width: 100%;
+  padding: 16px;
+  background: linear-gradient(135deg, #0066cc, #0099ff);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.15rem;
+  font-weight: bold;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.result-info {
+  margin-top: 15px;
+  padding: 12px 15px;
+  background: #d4edda;
+  color: #155724;
+  border-radius: 10px;
+  display: none;
+}
+
+/* Форма заявки */
+.order-section {
+  background: var(--card-bg);
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+  margin: 30px 0;
+}
+
+form input, form select, form textarea {
+  width: 100%;
+  padding: 14px;
+  margin: 10px 0;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  font-size: 1.05rem;
+}
+
+form button {
+  width: 100%;
+  padding: 16px;
+  background: #28a745;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 1.2rem;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+/* Адаптив */
+@media (max-width: 768px) {
+  .menu { display: none; }
+  .burger { display: block; }
+  header h1 { font-size: 2rem; }
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 15px;
+}
