@@ -1,0 +1,1235 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Админ-панель | ТДТК.РФ — г. Макаров</title>
+    <link rel="stylesheet" href="../css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --admin-bg: #0d1f12;
+            --admin-card: #142818;
+            --admin-border: #1e3a25;
+            --admin-text: #e0f0e5;
+            --admin-muted: #6a9a6a;
+            --admin-accent: #e8b923;
+            --admin-primary: #1a5f2a;
+            --admin-success: #4caf50;
+            --admin-warning: #ff9800;
+            --admin-danger: #f44336;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Montserrat', sans-serif;
+            background: var(--admin-bg);
+            color: var(--admin-text);
+            min-height: 100vh;
+        }
+
+        .admin-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            min-height: 100vh;
+        }
+
+        /* ===== САЙДБАР ===== */
+        .sidebar {
+            background: var(--admin-card);
+            border-right: 1px solid var(--admin-border);
+            padding: 25px 0;
+            position: fixed;
+            width: 260px;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+
+        .sidebar-logo {
+            padding: 0 25px 25px;
+            border-bottom: 1px solid var(--admin-border);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-logo h2 {
+            font-size: 1.3rem;
+            color: var(--admin-accent);
+            font-weight: 800;
+        }
+
+        .sidebar-logo p {
+            font-size: 0.75rem;
+            color: var(--admin-muted);
+            margin-top: 4px;
+        }
+
+        .sidebar-logo .city {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 8px;
+            padding: 4px 10px;
+            background: rgba(26, 95, 42, 0.2);
+            border-radius: 15px;
+            font-size: 0.75rem;
+            color: var(--admin-primary);
+        }
+
+        .sidebar-nav {
+            padding: 0 15px;
+        }
+
+        .nav-section {
+            margin-bottom: 8px;
+        }
+
+        .nav-section-title {
+            padding: 10px 15px;
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--admin-muted);
+            font-weight: 700;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 15px;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: var(--admin-text);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .nav-item:hover, .nav-item.active {
+            background: rgba(26, 95, 42, 0.2);
+            color: var(--admin-accent);
+        }
+
+        .nav-item i {
+            width: 22px;
+            text-align: center;
+            font-size: 1rem;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            padding: 2px 8px;
+            background: var(--admin-danger);
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .sidebar-footer {
+            padding: 20px 25px 0;
+            border-top: 1px solid var(--admin-border);
+            margin-top: 20px;
+        }
+
+        .sidebar-footer a {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--admin-muted);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.3s;
+        }
+
+        .sidebar-footer a:hover {
+            color: var(--admin-accent);
+        }
+
+        /* ===== КОНТЕНТ ===== */
+        .main-content {
+            margin-left: 260px;
+            padding: 30px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .page-header h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .page-header .date {
+            color: var(--admin-muted);
+            font-size: 0.9rem;
+        }
+
+        /* ===== КАРТОЧКИ СТАТИСТИКИ ===== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: var(--admin-card);
+            border: 1px solid var(--admin-border);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--admin-primary);
+        }
+
+        .stat-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .stat-card-title {
+            font-size: 0.85rem;
+            color: var(--admin-muted);
+            font-weight: 500;
+        }
+
+        .stat-card-icon {
+            width: 42px;
+            height: 42px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        .stat-card-icon.blue { background: rgba(33, 150, 243, 0.15); color: #2196f3; }
+        .stat-card-icon.green { background: rgba(76, 175, 80, 0.15); color: var(--admin-success); }
+        .stat-card-icon.orange { background: rgba(255, 152, 0, 0.15); color: var(--admin-warning); }
+        .stat-card-icon.red { background: rgba(244, 67, 54, 0.15); color: var(--admin-danger); }
+
+        .stat-card-value {
+            font-size: 2rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+        }
+
+        .stat-card-change {
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .stat-card-change.positive { color: var(--admin-success); }
+        .stat-card-change.negative { color: var(--admin-danger); }
+
+        /* ===== ТАБЛИЦА ===== */
+        .data-table-container {
+            background: var(--admin-card);
+            border: 1px solid var(--admin-border);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 30px;
+        }
+
+        .table-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--admin-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .table-header h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .table-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            border-radius: 8px;
+        }
+
+        .btn-export {
+            background: var(--admin-primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .btn-export:hover {
+            filter: brightness(1.2);
+        }
+
+        .search-input {
+            padding: 8px 14px;
+            border-radius: 8px;
+            border: 1px solid var(--admin-border);
+            background: var(--admin-bg);
+            color: var(--admin-text);
+            font-size: 0.9rem;
+            outline: none;
+            font-family: inherit;
+        }
+
+        .search-input:focus {
+            border-color: var(--admin-primary);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th {
+            text-align: left;
+            padding: 14px 20px;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--admin-muted);
+            font-weight: 600;
+            border-bottom: 1px solid var(--admin-border);
+            background: rgba(0,0,0,0.2);
+        }
+
+        td {
+            padding: 14px 20px;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--admin-border);
+            color: var(--admin-text);
+        }
+
+        tr:hover td {
+            background: rgba(26, 95, 42, 0.05);
+        }
+
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .badge-success {
+            background: rgba(76, 175, 80, 0.15);
+            color: var(--admin-success);
+        }
+
+        .badge-warning {
+            background: rgba(255, 152, 0, 0.15);
+            color: var(--admin-warning);
+        }
+
+        .badge-info {
+            background: rgba(33, 150, 243, 0.15);
+            color: #2196f3;
+        }
+
+        .progress-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .progress-mini {
+            width: 60px;
+            height: 6px;
+            background: var(--admin-border);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-mini-fill {
+            height: 100%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--admin-success), #81c784);
+            transition: width 0.5s;
+        }
+
+        .progress-mini-fill.low {
+            background: linear-gradient(90deg, var(--admin-warning), #ffb74d);
+        }
+
+        /* ===== ВКЛАДКИ ===== */
+        .tabs {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+            border-bottom: 1px solid var(--admin-border);
+            padding-bottom: 10px;
+        }
+
+        .tab {
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 600;
+            transition: all 0.3s;
+            color: var(--admin-muted);
+            border: none;
+            background: none;
+            font-family: inherit;
+        }
+
+        .tab:hover {
+            color: var(--admin-text);
+            background: rgba(26, 95, 42, 0.1);
+        }
+
+        .tab.active {
+            color: var(--admin-accent);
+            background: rgba(232, 185, 35, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ===== ГРАФИКИ ===== */
+        .chart-container {
+            background: var(--admin-card);
+            border: 1px solid var(--admin-border);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+        }
+
+        .chart-header {
+            margin-bottom: 20px;
+        }
+
+        .chart-header h3 {
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .chart-bar {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .chart-label {
+            width: 120px;
+            font-size: 0.85rem;
+            color: var(--admin-muted);
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .chart-bar-bg {
+            flex: 1;
+            height: 28px;
+            background: var(--admin-bg);
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 10px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: white;
+            transition: width 1s;
+        }
+
+        .chart-value {
+            width: 50px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: var(--admin-text);
+            flex-shrink: 0;
+        }
+
+        /* ===== МОБИЛЬНОЕ МЕНЮ ===== */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 200;
+            width: 45px;
+            height: 45px;
+            background: var(--admin-card);
+            border: 1px solid var(--admin-border);
+            border-radius: 10px;
+            color: var(--admin-text);
+            font-size: 1.2rem;
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 99;
+        }
+
+        .sidebar-overlay.active {
+            display: block;
+        }
+
+        /* ===== АДАПТИВ ===== */
+        @media (max-width: 1024px) {
+            .admin-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .sidebar.active {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+                padding-top: 70px;
+            }
+
+            .mobile-toggle {
+                display: flex;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .table-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .table-actions {
+                flex-direction: column;
+            }
+
+            .data-table-container {
+                overflow-x: auto;
+            }
+
+            table {
+                min-width: 800px;
+            }
+
+            .tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+
+            .chart-label {
+                width: 80px;
+                font-size: 0.75rem;
+            }
+        }
+
+        /* Скрыть колонки на мобильных */
+        @media (max-width: 768px) {
+            .hide-mobile { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <button class="mobile-toggle" id="mobile-toggle">
+        <i class="fas fa-bars"></i>
+    </button>
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+
+    <div class="admin-layout">
+        <!-- Сайдбар -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-logo">
+                <h2><i class="fas fa-shield-halved"></i> ТДТК.РФ</h2>
+                <p>Административная панель</p>
+                <span class="city"><i class="fas fa-map-marker-alt"></i> г. Макаров</span>
+            </div>
+
+            <nav class="sidebar-nav">
+                <div class="nav-section">
+                    <div class="nav-section-title">Основное</div>
+                    <a href="#dashboard" class="nav-item active" data-tab="dashboard">
+                        <i class="fas fa-chart-line"></i>
+                        <span>Дашборд</span>
+                    </a>
+                    <a href="#applications" class="nav-item" data-tab="applications">
+                        <i class="fas fa-file-signature"></i>
+                        <span>Заявки</span>
+                        <span class="nav-badge">24</span>
+                    </a>
+                    <a href="#entrances" class="nav-item" data-tab="entrances">
+                        <i class="fas fa-building"></i>
+                        <span>Подъезды</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Аналитика</div>
+                    <a href="#analytics" class="nav-item" data-tab="analytics">
+                        <i class="fas fa-chart-pie"></i>
+                        <span>Статистика</span>
+                    </a>
+                    <a href="#tariffs" class="nav-item" data-tab="tariffs">
+                        <i class="fas fa-tags"></i>
+                        <span>Тарифы</span>
+                    </a>
+                </div>
+
+                <div class="nav-section">
+                    <div class="nav-section-title">Настройки</div>
+                    <a href="#settings" class="nav-item" data-tab="settings">
+                        <i class="fas fa-cog"></i>
+                        <span>Настройки</span>
+                    </a>
+                </div>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="../index.html">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>Вернуться на сайт</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Контент -->
+        <main class="main-content">
+            <!-- ДАШБОРД -->
+            <div class="tab-content active" id="dashboard">
+                <div class="page-header">
+                    <h1><i class="fas fa-chart-line" style="color: var(--admin-accent); margin-right: 10px;"></i>Дашборд</h1>
+                    <span class="date"><i class="fas fa-calendar"></i> 26 мая 2026</span>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Всего заявок</span>
+                            <div class="stat-card-icon blue"><i class="fas fa-file-signature"></i></div>
+                        </div>
+                        <div class="stat-card-value" style="color: #2196f3;">247</div>
+                        <div class="stat-card-change positive">
+                            <i class="fas fa-arrow-up"></i> +12 за неделю
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Готовы к установке</span>
+                            <div class="stat-card-icon green"><i class="fas fa-check-circle"></i></div>
+                        </div>
+                        <div class="stat-card-value" style="color: var(--admin-success);">18</div>
+                        <div class="stat-card-change positive">
+                            <i class="fas fa-arrow-up"></i> +3 за неделю
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">В процессе сбора</span>
+                            <div class="stat-card-icon orange"><i class="fas fa-clock"></i></div>
+                        </div>
+                        <div class="stat-card-value" style="color: var(--admin-warning);">42</div>
+                        <div class="stat-card-change positive">
+                            <i class="fas fa-arrow-up"></i> +8 за неделю
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Установлено</span>
+                            <div class="stat-card-icon red"><i class="fas fa-tools"></i></div>
+                        </div>
+                        <div class="stat-card-value" style="color: var(--admin-danger);">12</div>
+                        <div class="stat-card-change positive">
+                            <i class="fas fa-arrow-up"></i> +2 за неделю
+                        </div>
+                    </div>
+                </div>
+
+                <!-- График распределения по тарифам -->
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-tags" style="color: var(--admin-accent); margin-right: 8px;"></i>Распределение заявок по тарифам</h3>
+                    </div>
+                    <div class="chart-bar">
+                        <span class="chart-label">Стандарт 200₽</span>
+                        <div class="chart-bar-bg">
+                            <div class="chart-bar-fill" style="width: 35%; background: linear-gradient(90deg, #2196f3, #64b5f6);">35%</div>
+                        </div>
+                        <span class="chart-value">86</span>
+                    </div>
+                    <div class="chart-bar">
+                        <span class="chart-label">Стандарт +10к</span>
+                        <div class="chart-bar-bg">
+                            <div class="chart-bar-fill" style="width: 15%; background: linear-gradient(90deg, #9c27b0, #ce93d8);">15%</div>
+                        </div>
+                        <span class="chart-value">37</span>
+                    </div>
+                    <div class="chart-bar">
+                        <span class="chart-label">Камера 350₽</span>
+                        <div class="chart-bar-bg">
+                            <div class="chart-bar-fill" style="width: 40%; background: linear-gradient(90deg, var(--admin-success), #81c784);">40%</div>
+                        </div>
+                        <span class="chart-value">99</span>
+                    </div>
+                    <div class="chart-bar">
+                        <span class="chart-label">Камера +10к</span>
+                        <div class="chart-bar-bg">
+                            <div class="chart-bar-fill" style="width: 10%; background: linear-gradient(90deg, var(--admin-warning), #ffb74d);">10%</div>
+                        </div>
+                        <span class="chart-value">25</span>
+                    </div>
+                </div>
+
+                <!-- Последние заявки -->
+                <div class="data-table-container">
+                    <div class="table-header">
+                        <h3><i class="fas fa-clock" style="color: var(--admin-accent); margin-right: 8px;"></i>Последние заявки</h3>
+                        <div class="table-actions">
+                            <input type="text" class="search-input" placeholder="Поиск...">
+                            <button class="btn-sm btn-export"><i class="fas fa-download"></i> Экспорт</button>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Адрес</th>
+                                <th>Подъезд</th>
+                                <th>Квартира</th>
+                                <th>Тариф</th>
+                                <th>Статус</th>
+                                <th class="hide-mobile">Телефон</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>26.05.2026</td>
+                                <td>ул. Ленина, д. 10</td>
+                                <td>1</td>
+                                <td>42</td>
+                                <td><span class="badge badge-info">Камера 350₽</span></td>
+                                <td><span class="badge badge-success">Согласен</span></td>
+                                <td class="hide-mobile">+7 (999) 123-45-67</td>
+                            </tr>
+                            <tr>
+                                <td>26.05.2026</td>
+                                <td>пр. Мира, д. 5</td>
+                                <td>1</td>
+                                <td>15</td>
+                                <td><span class="badge badge-success">Стандарт 200₽</span></td>
+                                <td><span class="badge badge-success">Согласен</span></td>
+                                <td class="hide-mobile">+7 (999) 234-56-78</td>
+                            </tr>
+                            <tr>
+                                <td>25.05.2026</td>
+                                <td>ул. Гагарина, д. 15</td>
+                                <td>2</td>
+                                <td>8</td>
+                                <td><span class="badge badge-info">Камера 350₽</span></td>
+                                <td><span class="badge badge-warning">Думает</span></td>
+                                <td class="hide-mobile">+7 (999) 345-67-89</td>
+                            </tr>
+                            <tr>
+                                <td>25.05.2026</td>
+                                <td>ул. Победы, д. 8</td>
+                                <td>2</td>
+                                <td>22</td>
+                                <td><span class="badge badge-warning">Камера +10к</span></td>
+                                <td><span class="badge badge-success">Согласен</span></td>
+                                <td class="hide-mobile">+7 (999) 456-78-90</td>
+                            </tr>
+                            <tr>
+                                <td>24.05.2026</td>
+                                <td>ул. Садовая, д. 3</td>
+                                <td>1</td>
+                                <td>5</td>
+                                <td><span class="badge badge-success">Стандарт 200₽</span></td>
+                                <td><span class="badge badge-success">Согласен</span></td>
+                                <td class="hide-mobile">+7 (999) 567-89-01</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ЗАЯВКИ -->
+            <div class="tab-content" id="applications">
+                <div class="page-header">
+                    <h1><i class="fas fa-file-signature" style="color: var(--admin-accent); margin-right: 10px;"></i>Все заявки</h1>
+                </div>
+
+                <div class="tabs">
+                    <button class="tab active">Все (247)</button>
+                    <button class="tab">Согласны (198)</button>
+                    <button class="tab">Думают (49)</button>
+                    <button class="tab">Новые (12)</button>
+                </div>
+
+                <div class="data-table-container">
+                    <div class="table-header">
+                        <h3>Список заявок</h3>
+                        <div class="table-actions">
+                            <input type="text" class="search-input" placeholder="Поиск по адресу...">
+                            <button class="btn-sm btn-export"><i class="fas fa-file-excel"></i> Excel</button>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Дата</th>
+                                <th>Адрес</th>
+                                <th>Подъезд</th>
+                                <th>Квартира</th>
+                                <th>Тариф</th>
+                                <th>Согласие</th>
+                                <th>Телефон</th>
+                                <th>Имя</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="applications-table-body">
+                            <!-- Заполняется JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- ПОДЪЕЗДЫ -->
+            <div class="tab-content" id="entrances">
+                <div class="page-header">
+                    <h1><i class="fas fa-building" style="color: var(--admin-accent); margin-right: 10px;"></i>Подъезды</h1>
+                </div>
+
+                <div class="data-table-container">
+                    <div class="table-header">
+                        <h3>Статус по подъездам г. Макаров</h3>
+                        <div class="table-actions">
+                            <input type="text" class="search-input" placeholder="Поиск по адресу...">
+                            <button class="btn-sm btn-export"><i class="fas fa-download"></i> Экспорт</button>
+                        </div>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Адрес</th>
+                                <th>Подъезд</th>
+                                <th>Всего кв.</th>
+                                <th>Согласились</th>
+                                <th>Прогресс</th>
+                                <th>Статус</th>
+                                <th>Тариф</th>
+                                <th>Последняя заявка</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody id="entrances-table-body">
+                            <!-- Заполняется JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- АНАЛИТИКА -->
+            <div class="tab-content" id="analytics">
+                <div class="page-header">
+                    <h1><i class="fas fa-chart-pie" style="color: var(--admin-accent); margin-right: 10px;"></i>Статистика</h1>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Конверсия в согласие</span>
+                            <div class="stat-card-icon green"><i class="fas fa-percentage"></i></div>
+                        </div>
+                        <div class="stat-card-value" style="color: var(--admin-success);">80.2%</div>
+                        <div class="stat-card-change positive">
+                            <i class="fas fa-arrow-up"></i> +2.1% за месяц
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Средний % сбора</span>
+                            <div class="stat-card-icon orange"><i class="fas fa-chart-bar"></i></div>
+                        </div>
+                        <div class="stat-card-value" style="color: var(--admin-warning);">62.4%</div>
+                        <div class="stat-card-change positive">
+                            <i class="fas fa-arrow-up"></i> +5.3% за месяц
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Среднее время до 50%</span>
+                            <div class="stat-card-icon blue"><i class="fas fa-clock"></i></div>
+                        </div>
+                        <div class="stat-card-value" style="color: #2196f3;">18 дн.</div>
+                        <div class="stat-card-change negative">
+                            <i class="fas fa-arrow-down"></i> -3 дня за месяц
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Предпочитаемый тариф</span>
+                            <div class="stat-card-icon green"><i class="fas fa-video"></i></div>
+                        </div>
+                        <div class="stat-card-value" style="color: var(--admin-success);">Камера</div>
+                        <div class="stat-card-change positive">
+                            <i class="fas fa-arrow-up"></i> 50% выборов
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <div class="chart-header">
+                        <h3><i class="fas fa-map" style="color: var(--admin-accent); margin-right: 8px;"></i>Заявки по улицам г. Макаров</h3>
+                    </div>
+                    <div class="chart-bar">
+                        <span class="chart-label">ул. Ленина</span>
+                        <div class="chart-bar-bg">
+                            <div class="chart-bar-fill" style="width: 85%; background: linear-gradient(90deg, var(--admin-success), #81c784);">85 заявок</div>
+                        </div>
+                        <span class="chart-value">85</span>
+                    </div>
+                    <div class="chart-bar">
+                        <span class="chart-label">пр. Мира</span>
+                        <div class="chart-bar-bg">
+                            <div class="chart-bar-fill" style="width: 60%; background: linear-gradient(90deg, #2196f3, #64b5f6);">60 заявок</div>
+                        </div>
+                        <span class="chart-value">60</span>
+                    </div>
+                    <div class="chart-bar">
+                        <span class="chart-label">ул. Гагарина</span>
+                        <div class="chart-bar-bg">
+                            <div class="chart-bar-fill" style="width: 45%; background: linear-gradient(90deg, var(--admin-warning), #ffb74d);">45 заявок</div>
+                        </div>
+                        <span class="chart-value">45</span>
+                    </div>
+                    <div class="chart-bar">
+                        <span class="chart-label">ул. Победы</span>
+                        <div class="chart-bar-bg">
+                            <div class="chart-bar-fill" style="width: 35%; background: linear-gradient(90deg, #9c27b0, #ce93d8);">35 заявок</div>
+                        </div>
+                        <span class="chart-value">35</span>
+                    </div>
+                    <div class="chart-bar">
+                        <span class="chart-label">ул. Садовая</span>
+                        <div class="chart-bar-bg">
+                            <div class="chart-bar-fill" style="width: 22%; background: linear-gradient(90deg, var(--admin-danger), #ef5350);">22 заявки</div>
+                        </div>
+                        <span class="chart-value">22</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ТАРИФЫ -->
+            <div class="tab-content" id="tariffs">
+                <div class="page-header">
+                    <h1><i class="fas fa-tags" style="color: var(--admin-accent); margin-right: 10px;"></i>Управление тарифами</h1>
+                </div>
+
+                <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr);">
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Доход от абон. плат</span>
+                            <div class="stat-card-icon green"><i class="fas fa-ruble-sign"></i></div>
+                        </div>
+                        <div class="stat-card-value" style="color: var(--admin-success);">48 600 ₽/мес</div>
+                        <div class="stat-card-change positive">
+                            <i class="fas fa-arrow-up"></i> +3 200 ₽ за месяц
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-card-header">
+                            <span class="stat-card-title">Доход от установок +10к</span>
+                            <div class="stat-card-icon orange"><i class="fas fa-ruble-sign"></i></div>
+                        </div>
+                        <div class="stat-card-value" style="color: var(--admin-warning);">620 000 ₽</div>
+                        <div class="stat-card-change positive">
+                            <i class="fas fa-arrow-up"></i> +100 000 ₽ за месяц
+                        </div>
+                    </div>
+                </div>
+
+                <div class="data-table-container">
+                    <div class="table-header">
+                        <h3>Текущие тарифы</h3>
+                        <button class="btn-sm btn-export"><i class="fas fa-plus"></i> Добавить тариф</button>
+                    </div>
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Название</th>
+                                <th>Тип</th>
+                                <th>Абон. плата</th>
+                                <th>Установка</th>
+                                <th>Заявок</th>
+                                <th>Доход/мес</th>
+                                <th>Статус</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Домофон стандарт</strong></td>
+                                <td>Аудио</td>
+                                <td>200 ₽/мес</td>
+                                <td>Бесплатно</td>
+                                <td>86</td>
+                                <td>17 200 ₽</td>
+                                <td><span class="badge badge-success">Активен</span></td>
+                                <td><i class="fas fa-edit" style="cursor: pointer; color: var(--admin-accent);"></i></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Домофон стандарт (без абон.)</strong></td>
+                                <td>Аудио</td>
+                                <td>—</td>
+                                <td>+10 000 ₽</td>
+                                <td>37</td>
+                                <td>—</td>
+                                <td><span class="badge badge-success">Активен</span></td>
+                                <td><i class="fas fa-edit" style="cursor: pointer; color: var(--admin-accent);"></i></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Домофон + камера</strong></td>
+                                <td>Видео</td>
+                                <td>350 ₽/мес</td>
+                                <td>Бесплатно</td>
+                                <td>99</td>
+                                <td>34 650 ₽</td>
+                                <td><span class="badge badge-success">Активен</span></td>
+                                <td><i class="fas fa-edit" style="cursor: pointer; color: var(--admin-accent);"></i></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Домофон + камера (без абон.)</strong></td>
+                                <td>Видео</td>
+                                <td>—</td>
+                                <td>+10 000 ₽</td>
+                                <td>25</td>
+                                <td>—</td>
+                                <td><span class="badge badge-success">Активен</span></td>
+                                <td><i class="fas fa-edit" style="cursor: pointer; color: var(--admin-accent);"></i></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- НАСТРОЙКИ -->
+            <div class="tab-content" id="settings">
+                <div class="page-header">
+                    <h1><i class="fas fa-cog" style="color: var(--admin-accent); margin-right: 10px;"></i>Настройки</h1>
+                </div>
+
+                <div class="data-table-container">
+                    <div class="table-header">
+                        <h3>Настройки системы</h3>
+                    </div>
+                    <div style="padding: 25px;">
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Город работы</label>
+                            <input type="text" value="г. Макаров" class="search-input" style="width: 300px;" readonly>
+                        </div>
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">Порог сбора согласий (%)</label>
+                            <input type="number" value="50" class="search-input" style="width: 100px;">
+                        </div>
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">URL Google Forms</label>
+                            <input type="text" value="ВАШ_URL_GOOGLE_FORM" class="search-input" style="width: 100%; max-width: 500px;">
+                        </div>
+                        <div style="margin-bottom: 25px;">
+                            <label style="display: block; margin-bottom: 8px; font-weight: 600;">URL Google Apps Script API</label>
+                            <input type="text" value="ВАШ_URL_GOOGLE_APPS_SCRIPT" class="search-input" style="width: 100%; max-width: 500px;">
+                        </div>
+                        <div>
+                            <button class="btn-sm btn-export" style="padding: 12px 24px;">
+                                <i class="fas fa-save"></i> Сохранить настройки
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // ===== НАВИГАЦИЯ =====
+        const navItems = document.querySelectorAll('.nav-item');
+        const tabContents = document.querySelectorAll('.tab-content');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const tabId = item.dataset.tab;
+
+                // Активировать пункт меню
+                navItems.forEach(nav => nav.classList.remove('active'));
+                item.classList.add('active');
+
+                // Показать контент
+                tabContents.forEach(content => content.classList.remove('active'));
+                document.getElementById(tabId).classList.add('active');
+
+                // Закрыть мобильное меню
+                document.getElementById('sidebar').classList.remove('active');
+                document.getElementById('sidebar-overlay').classList.remove('active');
+            });
+        });
+
+        // ===== МОБИЛЬНОЕ МЕНЮ =====
+        const mobileToggle = document.getElementById('mobile-toggle');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        mobileToggle.addEventListener('click', () => {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        });
+
+        sidebarOverlay.addEventListener('click', () => {
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+        });
+
+        // ===== ЗАПОЛНЕНИЕ ТАБЛИЦ =====
+        const demoData = [
+            { id: 1, date: '26.05.2026', address: 'ул. Ленина, д. 10', entrance: 1, apartment: 42, tariff: 'Камера 350₽', consent: 'Да', phone: '+7 (999) 123-45-67', name: 'Иванов И.И.' },
+            { id: 2, date: '26.05.2026', address: 'пр. Мира, д. 5', entrance: 1, apartment: 15, tariff: 'Стандарт 200₽', consent: 'Да', phone: '+7 (999) 234-56-78', name: 'Петрова А.А.' },
+            { id: 3, date: '25.05.2026', address: 'ул. Гагарина, д. 15', entrance: 2, apartment: 8, tariff: 'Камера 350₽', consent: 'Думает', phone: '+7 (999) 345-67-89', name: 'Сидоров В.В.' },
+            { id: 4, date: '25.05.2026', address: 'ул. Победы, д. 8', entrance: 2, apartment: 22, tariff: 'Камера +10к', consent: 'Да', phone: '+7 (999) 456-78-90', name: 'Козлова Е.Е.' },
+            { id: 5, date: '24.05.2026', address: 'ул. Садовая, д. 3', entrance: 1, apartment: 5, tariff: 'Стандарт 200₽', consent: 'Да', phone: '+7 (999) 567-89-01', name: 'Новиков Д.Д.' },
+            { id: 6, date: '24.05.2026', address: 'ул. Ленина, д. 10', entrance: 1, apartment: 18, tariff: 'Стандарт 200₽', consent: 'Да', phone: '+7 (999) 678-90-12', name: 'Морозова С.С.' },
+            { id: 7, date: '23.05.2026', address: 'пр. Мира, д. 5', entrance: 1, apartment: 7, tariff: 'Камера 350₽', consent: 'Да', phone: '+7 (999) 789-01-23', name: 'Волков М.М.' },
+            { id: 8, date: '23.05.2026', address: 'ул. Гагарина, д. 15', entrance: 3, apartment: 12, tariff: 'Камера +10к', consent: 'Да', phone: '+7 (999) 890-12-34', name: 'Лебедева О.О.' },
+        ];
+
+        // Заполнить таблицу заявок
+        const appTableBody = document.getElementById('applications-table-body');
+        demoData.forEach(row => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>#${String(row.id).padStart(4, '0')}</td>
+                <td>${row.date}</td>
+                <td>${row.address}</td>
+                <td>${row.entrance}</td>
+                <td>${row.apartment}</td>
+                <td><span class="badge ${row.tariff.includes('Камера') ? 'badge-info' : 'badge-success'}">${row.tariff}</span></td>
+                <td><span class="badge ${row.consent === 'Да' ? 'badge-success' : 'badge-warning'}">${row.consent === 'Да' ? 'Согласен' : 'Думает'}</span></td>
+                <td>${row.phone}</td>
+                <td>${row.name}</td>
+                <td><i class="fas fa-ellipsis-v" style="cursor: pointer; color: var(--admin-muted);"></i></td>
+            `;
+            appTableBody.appendChild(tr);
+        });
+
+        // Заполнить таблицу подъездов
+        const entranceData = [
+            { address: 'ул. Ленина, д. 10', entrance: 1, total: 20, agreed: 12, tariff: 'Камера 350₽', lastUpdate: '26.05.2026' },
+            { address: 'ул. Ленина, д. 10', entrance: 2, total: 18, agreed: 8, tariff: 'Стандарт 200₽', lastUpdate: '24.05.2026' },
+            { address: 'пр. Мира, д. 5', entrance: 1, total: 24, agreed: 15, tariff: 'Камера 350₽', lastUpdate: '26.05.2026' },
+            { address: 'ул. Гагарина, д. 15', entrance: 1, total: 16, agreed: 6, tariff: 'Стандарт 200₽', lastUpdate: '20.05.2026' },
+            { address: 'ул. Гагарина, д. 15', entrance: 2, total: 16, agreed: 11, tariff: 'Камера 350₽', lastUpdate: '23.05.2026' },
+            { address: 'ул. Гагарина, д. 15', entrance: 3, total: 22, agreed: 14, tariff: 'Камера +10к', lastUpdate: '25.05.2026' },
+            { address: 'ул. Победы, д. 8', entrance: 1, total: 14, agreed: 9, tariff: 'Стандарт 200₽', lastUpdate: '22.05.2026' },
+            { address: 'ул. Победы, д. 8', entrance: 2, total: 28, agreed: 16, tariff: 'Камера 350₽', lastUpdate: '26.05.2026' },
+            { address: 'ул. Садовая, д. 3', entrance: 1, total: 12, agreed: 8, tariff: 'Стандарт +10к', lastUpdate: '21.05.2026' },
+        ];
+
+        const entranceTableBody = document.getElementById('entrances-table-body');
+        entranceData.forEach(row => {
+            const percent = Math.round((row.agreed / row.total) * 100);
+            const isReady = percent >= 50;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><strong>${row.address}</strong></td>
+                <td>${row.entrance}</td>
+                <td>${row.total}</td>
+                <td><strong style="color: ${isReady ? 'var(--admin-success)' : 'var(--admin-warning)'}">${row.agreed}</strong></td>
+                <td>
+                    <div class="progress-cell">
+                        <div class="progress-mini">
+                            <div class="progress-mini-fill ${!isReady ? 'low' : ''}" style="width: ${percent}%"></div>
+                        </div>
+                        <span>${percent}%</span>
+                    </div>
+                </td>
+                <td><span class="badge ${isReady ? 'badge-success' : 'badge-warning'}">${isReady ? '✅ Готов' : '⏳ В процессе'}</span></td>
+                <td><span class="badge ${row.tariff.includes('Камера') ? 'badge-info' : 'badge-success'}">${row.tariff}</span></td>
+                <td>${row.lastUpdate}</td>
+                <td><i class="fas fa-eye" style="cursor: pointer; color: var(--admin-accent); margin-right: 8px;"></i><i class="fas fa-edit" style="cursor: pointer; color: var(--admin-muted);"></i></td>
+            `;
+            entranceTableBody.appendChild(tr);
+        });
+
+        // ===== ТАБЫ В ЗАЯВКАХ =====
+        document.querySelectorAll('#applications .tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('#applications .tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
