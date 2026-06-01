@@ -1,484 +1,498 @@
 // ============================================
-// ТДТК.РФ — Твой Дом Твоя Крепость
-// Город: Макаров
+// ТДТК.РФ — Основная логика сайта
+// Работа с API Google Sheets
 // ============================================
 
-// URL Google Apps Script Web App (замените после деплоя)
-const API_URL = 'ВАШ_URL_GOOGLE_APPS_SCRIPT';
+// Конфигурация
+const CONFIG = {
+    API_URL: 'https://script.google.com/macros/s/AKfycbx_M0FX_peXAFKWz5b05bBZ_D1UnKNv721iEhjiud-bQ2Akf29_6D-oCxOVxV9ZBng1/exec', // Замените на ваш URL
+    CACHE_TIME: 60000, // 1 минута кэширования
+    AUTO_REFRESH_INTERVAL: 300000 // 5 минут автообновление
+};
 
-// Демо-данные для г. Макаров (пока нет подключения к API)
-const DEMO_DATA = [
-    { address: 'ул. Ленина, д. 10', entrance: 1, agreed: 12, total: 20, lastUpdate: '2026-05-25', tariff: 'Домофон + камера, 350р/мес' },
-    { address: 'ул. Ленина, д. 10', entrance: 2, agreed: 8, total: 18, lastUpdate: '2026-05-24', tariff: 'Домофон стандарт, 200р/мес' },
-    { address: 'пр. Мира, д. 5', entrance: 1, agreed: 15, total: 24, lastUpdate: '2026-05-26', tariff: 'Домофон + камера, 350р/мес' },
-    { address: 'ул. Гагарина, д. 15', entrance: 1, agreed: 6, total: 16, lastUpdate: '2026-05-20', tariff: 'Домофон стандарт, 200р/мес' },
-    { address: 'ул. Гагарина, д. 15', entrance: 2, agreed: 11, total: 16, lastUpdate: '2026-05-23', tariff: 'Домофон + камера, 350р/мес' },
-    { address: 'ул. Гагарина, д. 15', entrance: 3, agreed: 14, total: 22, lastUpdate: '2026-05-25', tariff: 'Домофон + камера, без абонплаты +10000' },
-    { address: 'ул. Победы, д. 8', entrance: 1, agreed: 9, total: 14, lastUpdate: '2026-05-22', tariff: 'Домофон стандарт, 200р/мес' },
-    { address: 'ул. Победы, д. 8', entrance: 2, agreed: 16, total: 28, lastUpdate: '2026-05-26', tariff: 'Домофон + камера, 350р/мес' },
-    { address: 'ул. Садовая, д. 3', entrance: 1, agreed: 8, total: 12, lastUpdate: '2026-05-21', tariff: 'Домофон стандарт, без абонплаты +10000' },
-];
+// Кэш данных
+let cache = {
+    applications: { data: null, timestamp: 0 },
+    entrances: { data: null, timestamp: 0 },
+    stats: { data: null, timestamp: 0 }
+};
 
-// Инициализация
-let currentSlide = 0;
-let totalSlides = 5;
-let autoSlideInterval;
+// ===== ОСНОВНЫЕ ФУНКЦИИ API =====
 
-document.addEventListener('DOMContentLoaded', () => {
-    initHeader();
-    initMobileMenu();
-    initCounters();
-    loadProgress();
-    initFilters();
-    initForm();
-    initSlider();
-    initSmoothScroll();
-    initTariffSelection();
-    initPhoneMask();
-});
-
-// ===== ШАПКА СКРОЛЛ =====
-function initHeader() {
-    const header = document.getElementById('header');
-    let lastScroll = 0;
-
-    window.addEventListener('scroll', () => {
-        const currentScroll = window.pageYOffset;
-
-        if (currentScroll > 50) {
-            header.classList.add('scrolled');
+async function callAPI(action, data = null) {
+    try {
+        const options = {
+            method: 'POST',
+            mode: 'cors',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        };
+        
+        if(data) {
+            options.body = JSON.stringify({ action, ...data });
         } else {
-            header.classList.remove('scrolled');
+            // GET запрос
+            const url = new URL(CONFIG.API_URL);
+            url.searchParams.append('action', action);
+            const response = await fetch(url.toString());
+            return await response.json();
         }
-
-        lastScroll = currentScroll;
-    });
+        
+        const response = await fetch(CONFIG.API_URL, options);
+        return await response.json();
+    } catch(error) {
+        console.error('API Error:', error);
+        showToast('Ошибка соединения с сервером', 'error');
+        return { success: false, error: error.message };
+    }
 }
 
-// ===== МОБИЛЬНОЕ МЕНЮ =====
-function initMobileMenu() {
+// Получение всех заявок
+async function getApplications(forceRefresh = false) {
+    const now = Date.now();
+    if(!forceRefresh && cache.applications.data && (now - cache.applications.timestamp) < CONFIG.CACHE_TIME) {
+        return cache.applications.data;
+    }
+    
+    const result = await callAPI('getApplications');
+    if(result.success) {
+        cache.applications.data = result.data;
+        cache.applications.timestamp = now;
+        return result.data;
+    }
+    return [];
+}
+
+// Получение подъездов
+async function getEntrances(forceRefresh = false) {
+    const now = Date.now();
+    if(!forceRefresh && cache.entrances.data && (now - cache.entrances.timestamp) < CONFIG.CACHE_TIME) {
+        return cache.entrances.data;
+    }
+    
+    const result = await callAPI('getEntrances');
+    if(result.success) {
+        cache.entrances.data = result.data;
+        cache.entrances.timestamp = now;
+        return result.data;
+    }
+    return [];
+}
+
+// Получение статистики
+async function getDashboardStats(forceRefresh = false) {
+    const now = Date.now();
+    if(!forceRefresh && cache.stats.data && (now - cache.stats.timestamp) < CONFIG.CACHE_TIME) {
+        return cache.stats.data;
+    }
+    
+    const result = await callAPI('getDashboardStats');
+    if(result.success) {
+        cache.stats.data = result.data;
+        cache.stats.timestamp = now;
+        return result.data;
+    }
+    return null;
+}
+
+// Отправка заявки
+async function submitApplication(formData) {
+    const result = await callAPI('addApplication', formData);
+    if(result.success) {
+        // Очищаем кэш
+        cache.applications.timestamp = 0;
+        cache.entrances.timestamp = 0;
+        cache.stats.timestamp = 0;
+        showToast('Заявка успешно отправлена!', 'success');
+        return true;
+    } else {
+        showToast('Ошибка отправки: ' + (result.error || 'Попробуйте позже'), 'error');
+        return false;
+    }
+}
+
+// ===== UI ФУНКЦИИ =====
+
+// Инициализация страницы
+document.addEventListener('DOMContentLoaded', async () => {
+    // Настройка бургер-меню
+    setupMobileMenu();
+    
+    // Настройка скролла с offset для фиксированного хедера
+    setupSmoothScroll();
+    
+    // Загрузка прогресса подъездов
+    await loadProgress();
+    
+    // Обновление статистики в hero
+    await updateHeroStats();
+    
+    // Настройка формы
+    setupForm();
+    
+    // Настройка слайдера
+    setupSlider();
+    
+    // Автообновление прогресса
+    if(CONFIG.AUTO_REFRESH_INTERVAL > 0) {
+        setInterval(async () => {
+            await loadProgress(true);
+            await updateHeroStats(true);
+        }, CONFIG.AUTO_REFRESH_INTERVAL);
+    }
+});
+
+// Мобильное меню
+function setupMobileMenu() {
     const burger = document.getElementById('burger');
     const mobileMenu = document.getElementById('mobile-menu');
     const overlay = document.getElementById('mobile-overlay');
     const closeBtn = document.getElementById('menu-close');
-    const mobileLinks = mobileMenu.querySelectorAll('a');
-
-    function openMenu() {
-        burger.classList.add('active');
-        mobileMenu.classList.add('active');
-        overlay.classList.add('active');
-        document.body.style.overflow = 'hidden';
-    }
-
+    
+    if(!burger) return;
+    
     function closeMenu() {
-        burger.classList.remove('active');
         mobileMenu.classList.remove('active');
         overlay.classList.remove('active');
-        document.body.style.overflow = '';
+        burger.classList.remove('active');
     }
-
+    
+    function openMenu() {
+        mobileMenu.classList.add('active');
+        overlay.classList.add('active');
+        burger.classList.add('active');
+    }
+    
     burger.addEventListener('click', () => {
-        if (mobileMenu.classList.contains('active')) {
+        if(mobileMenu.classList.contains('active')) {
             closeMenu();
         } else {
             openMenu();
         }
     });
-
-    closeBtn.addEventListener('click', closeMenu);
+    
     overlay.addEventListener('click', closeMenu);
-
-    mobileLinks.forEach(link => {
+    if(closeBtn) closeBtn.addEventListener('click', closeMenu);
+    
+    // Закрытие при клике на ссылку
+    document.querySelectorAll('.mobile-nav a').forEach(link => {
         link.addEventListener('click', closeMenu);
     });
 }
 
-// ===== АНИМАЦИЯ СЧЁТЧИКОВ =====
-function initCounters() {
-    const counters = [
-        { el: document.getElementById('total-buildings'), target: 47 },
-        { el: document.getElementById('total-apartments'), target: 1240 },
-        { el: document.getElementById('completed-entrances'), target: 12 }
-    ];
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                const counter = counters.find(c => c.el === entry.target);
-                if (counter) {
-                    animateCounter(counter.el, counter.target);
-                    observer.unobserve(entry.target);
-                }
-            }
-        });
-    }, { threshold: 0.5 });
-
-    counters.forEach(({ el }) => {
-        if (el) observer.observe(el);
-    });
-}
-
-function animateCounter(el, target) {
-    let current = 0;
-    const increment = target / 60;
-    const timer = setInterval(() => {
-        current += increment;
-        if (current >= target) {
-            current = target;
-            clearInterval(timer);
-        }
-        el.textContent = Math.floor(current).toLocaleString('ru-RU');
-    }, 25);
-}
-
-// ===== ЗАГРУЗКА ПРОГРЕССА =====
-async function loadProgress() {
-    const grid = document.getElementById('progress-grid');
-
-    try {
-        const response = await fetch(API_URL);
-        if (!response.ok) throw new Error('API error');
-        const data = await response.json();
-        renderProgress(data);
-    } catch (error) {
-        console.log('API недоступен, используем демо-данные г. Макаров');
-        renderProgress(DEMO_DATA);
-    }
-}
-
-function renderProgress(data) {
-    const grid = document.getElementById('progress-grid');
-
-    if (!data || data.length === 0) {
-        grid.innerHTML = `
-            <div class="no-data">
-                <i class="fas fa-inbox" style="font-size: 3rem; color: var(--text-dim); margin-bottom: 15px; display: block;"></i>
-                Пока нет данных. Будьте первыми — подайте заявку!
-            </div>`;
-        return;
-    }
-
-    // Группировка по адресу + подъезд
-    const grouped = {};
-    data.forEach(item => {
-        const key = `${item.address}|${item.entrance}`;
-        if (!grouped[key]) {
-            grouped[key] = {
-                address: item.address,
-                entrance: item.entrance,
-                agreed: 0,
-                total: item.total,
-                lastUpdate: item.lastUpdate,
-                tariff: item.tariff || 'Не указан'
-            };
-        }
-        if (item.agreed || (item.consent && item.consent.includes('Да'))) {
-            grouped[key].agreed++;
-        }
-    });
-
-    grid.innerHTML = '';
-
-    Object.values(grouped).forEach(item => {
-        const percent = Math.round((item.agreed / item.total) * 100);
-        const isReady = percent >= 50;
-        const needed = Math.ceil(item.total * 0.5) - item.agreed;
-
-        const card = document.createElement('div');
-        card.className = `entrance-card ${isReady ? 'ready' : ''}`;
-        card.dataset.address = item.address.toLowerCase();
-        card.dataset.status = isReady ? 'ready' : 'in-progress';
-
-        card.innerHTML = `
-            <div class="card-header">
-                <div>
-                    <h3><i class="fas fa-building" style="color: var(--primary-light); margin-right: 6px;"></i>${item.address}</h3>
-                    <span class="entrance-number">Подъезд ${item.entrance} • ${item.total} квартир</span>
-                </div>
-                <span class="status-badge ${isReady ? 'ready' : 'progress'}">
-                    ${isReady ? '<i class="fas fa-check-circle"></i> Готов' : '<i class="fas fa-clock"></i> В процессе'}
-                </span>
-            </div>
-            <div class="progress-bar-container">
-                <div class="progress-bar-bg">
-                    <div class="progress-bar-fill ${isReady ? 'ready' : 'in-progress'}" 
-                         style="width: ${Math.min(percent, 100)}%"></div>
-                </div>
-                <div class="progress-stats">
-                    <span class="current">
-                        <i class="fas fa-users" style="margin-right: 4px;"></i>${item.agreed} согласились (${percent}%)
-                    </span>
-                    <span class="needed">
-                        ${needed > 0 ? `Нужно ещё: ${needed} кв.` : '<i class="fas fa-check" style="color: var(--success);"></i> Достаточно!'}
-                    </span>
-                </div>
-            </div>
-            <div style="margin-top: 12px; padding-left: 8px;">
-                <span style="font-size: 0.8rem; color: var(--text-dim);">
-                    <i class="fas fa-tag" style="margin-right: 4px;"></i>${item.tariff}
-                </span>
-            </div>
-            <small style="color: var(--text-dim); font-size: 0.75rem; display: block; margin-top: 8px; padding-left: 8px;">
-                <i class="fas fa-calendar-alt" style="margin-right: 4px;"></i>Обновлено: ${item.lastUpdate || 'недавно'}
-            </small>
-        `;
-
-        grid.appendChild(card);
-    });
-}
-
-// ===== ФИЛЬТРЫ =====
-function initFilters() {
-    const searchInput = document.getElementById('search-address');
-    const statusFilter = document.getElementById('filter-status');
-
-    function filterCards() {
-        const query = searchInput.value.toLowerCase().trim();
-        const status = statusFilter.value;
-        const cards = document.querySelectorAll('.entrance-card');
-        let visibleCount = 0;
-
-        cards.forEach(card => {
-            const matchesSearch = !query || card.dataset.address.includes(query);
-            const matchesStatus = status === 'all' || card.dataset.status === status;
-
-            if (matchesSearch && matchesStatus) {
-                card.style.display = 'block';
-                visibleCount++;
-            } else {
-                card.style.display = 'none';
-            }
-        });
-
-        // Показать сообщение если ничего не найдено
-        const grid = document.getElementById('progress-grid');
-        const existingNoResults = grid.querySelector('.no-results');
-
-        if (visibleCount === 0 && cards.length > 0) {
-            if (!existingNoResults) {
-                const noResults = document.createElement('div');
-                noResults.className = 'no-data no-results';
-                noResults.innerHTML = `
-                    <i class="fas fa-search" style="font-size: 2rem; color: var(--text-dim); margin-bottom: 10px; display: block;"></i>
-                    По вашему запросу ничего не найдено
-                `;
-                grid.appendChild(noResults);
-            }
-        } else if (existingNoResults) {
-            existingNoResults.remove();
-        }
-    }
-
-    searchInput.addEventListener('input', filterCards);
-    statusFilter.addEventListener('change', filterCards);
-}
-
-// ===== ФОРМА =====
-function initForm() {
-    const form = document.getElementById('application-form');
-
-    form.addEventListener('submit', (e) => {
-        // Валидация
-        const address = document.getElementById('address').value.trim();
-        const entrance = document.getElementById('entrance').value;
-        const apartment = document.getElementById('apartment').value;
-        const total = document.getElementById('total-apartments-form').value;
-        const phone = document.getElementById('phone').value.trim();
-
-        if (!address || !entrance || !apartment || !total || !phone) {
-            e.preventDefault();
-            showToast('Пожалуйста, заполните все обязательные поля', 'error');
-            return;
-        }
-
-        if (parseInt(apartment) > parseInt(total)) {
-            e.preventDefault();
-            showToast('Номер квартиры не может быть больше общего количества', 'error');
-            return;
-        }
-
-        // Показать уведомление об успехе
-        showToast('✅ Заявка отправлена! Спасибо за участие. Данные по вашему подъезду обновятся в течение нескольких минут.', 'success');
-
-        // Через небольшую задержку сбросить форму
-        setTimeout(() => {
-            form.reset();
-        }, 1000);
-    });
-}
-
-// ===== МАСКА ТЕЛЕФОНА =====
-function initPhoneMask() {
-    const phoneInput = document.getElementById('phone');
-    if (!phoneInput) return;
-
-    phoneInput.addEventListener('input', (e) => {
-        let value = e.target.value.replace(/\D/g, '');
-
-        if (value.startsWith('7') || value.startsWith('8')) {
-            value = value.substring(1);
-        }
-
-        let formatted = '+7';
-
-        if (value.length > 0) {
-            formatted += ' (' + value.substring(0, 3);
-        }
-        if (value.length >= 3) {
-            formatted += ') ' + value.substring(3, 6);
-        }
-        if (value.length >= 6) {
-            formatted += '-' + value.substring(6, 8);
-        }
-        if (value.length >= 8) {
-            formatted += '-' + value.substring(8, 10);
-        }
-
-        e.target.value = formatted;
-    });
-}
-
-// ===== ВЫБОР ТАРИФА =====
-function initTariffSelection() {
-    const tariffButtons = document.querySelectorAll('[data-tariff]');
-    const tariffRadios = document.querySelectorAll('.tariff-radio input');
-
-    tariffButtons.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            const tariff = e.target.dataset.tariff;
-
-            // Найти соответствующую радио-кнопку
-            tariffRadios.forEach(radio => {
-                if (tariff === 'standard' && radio.value.includes('стандарт')) {
-                    radio.checked = true;
-                } else if (tariff === 'camera' && radio.value.includes('камера')) {
-                    radio.checked = true;
-                }
-            });
-
-            // Прокрутить к форме
-            document.getElementById('apply').scrollIntoView({ behavior: 'smooth' });
-            showToast('Тариф выбран! Проверьте форму ниже.', 'success');
-        });
-    });
-}
-
-// ===== СЛАЙДЕР =====
-function initSlider() {
-    const track = document.getElementById('slider-track');
-    const prevBtn = document.getElementById('slider-prev');
-    const nextBtn = document.getElementById('slider-next');
-    const dotsContainer = document.getElementById('slider-dots');
-
-    if (!track) return;
-
-    // Создать точки
-    for (let i = 0; i < totalSlides; i++) {
-        const dot = document.createElement('button');
-        dot.className = 'slider-dot' + (i === 0 ? ' active' : '');
-        dot.addEventListener('click', () => goToSlide(i));
-        dotsContainer.appendChild(dot);
-    }
-
-    function goToSlide(index) {
-        currentSlide = index;
-        track.style.transform = `translateX(-${currentSlide * 100}%)`;
-
-        // Обновить точки
-        document.querySelectorAll('.slider-dot').forEach((dot, i) => {
-            dot.classList.toggle('active', i === currentSlide);
-        });
-    }
-
-    function nextSlide() {
-        currentSlide = (currentSlide + 1) % totalSlides;
-        goToSlide(currentSlide);
-    }
-
-    function prevSlide() {
-        currentSlide = (currentSlide - 1 + totalSlides) % totalSlides;
-        goToSlide(currentSlide);
-    }
-
-    prevBtn.addEventListener('click', () => {
-        prevSlide();
-        resetAutoSlide();
-    });
-
-    nextBtn.addEventListener('click', () => {
-        nextSlide();
-        resetAutoSlide();
-    });
-
-    // Свайп на мобильных
-    let touchStartX = 0;
-    let touchEndX = 0;
-
-    track.addEventListener('touchstart', (e) => {
-        touchStartX = e.changedTouches[0].screenX;
-    }, { passive: true });
-
-    track.addEventListener('touchend', (e) => {
-        touchEndX = e.changedTouches[0].screenX;
-        handleSwipe();
-    }, { passive: true });
-
-    function handleSwipe() {
-        const diff = touchStartX - touchEndX;
-        if (Math.abs(diff) > 50) {
-            if (diff > 0) {
-                nextSlide();
-            } else {
-                prevSlide();
-            }
-            resetAutoSlide();
-        }
-    }
-
-    // Автопрокрутка
-    function startAutoSlide() {
-        autoSlideInterval = setInterval(nextSlide, 6000);
-    }
-
-    function resetAutoSlide() {
-        clearInterval(autoSlideInterval);
-        startAutoSlide();
-    }
-
-    startAutoSlide();
-}
-
-// ===== ПЛАВНАЯ ПРОКРУТКА =====
-function initSmoothScroll() {
+// Плавный скролл
+function setupSmoothScroll() {
+    const header = document.getElementById('header');
+    const headerHeight = header ? header.offsetHeight : 72;
+    
     document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-        anchor.addEventListener('click', function (e) {
-            e.preventDefault();
-            const target = document.querySelector(this.getAttribute('href'));
-            if (target) {
-                const headerHeight = document.getElementById('header').offsetHeight;
-                const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - headerHeight - 20;
+        anchor.addEventListener('click', function(e) {
+            const targetId = this.getAttribute('href');
+            if(targetId === '#') return;
+            
+            const target = document.querySelector(targetId);
+            if(target) {
+                e.preventDefault();
+                const targetPosition = target.getBoundingClientRect().top + window.pageYOffset - headerHeight;
                 window.scrollTo({ top: targetPosition, behavior: 'smooth' });
             }
         });
     });
 }
 
-// ===== TOAST УВЕДОМЛЕНИЯ =====
-function showToast(message, type = 'success') {
-    const container = document.getElementById('toast-container');
+// Загрузка прогресса подъездов
+async function loadProgress(forceRefresh = false) {
+    const container = document.getElementById('progress-grid');
+    if(!container) return;
+    
+    container.innerHTML = '<div class="loading"><div class="spinner"></div><p>Загрузка данных...</p></div>';
+    
+    try {
+        let entrances = await getEntrances(forceRefresh);
+        
+        // Фильтрация
+        const searchValue = document.getElementById('search-address')?.value.toLowerCase() || '';
+        const filterStatus = document.getElementById('filter-status')?.value || 'all';
+        
+        entrances = entrances.filter(entrance => {
+            const addressMatch = !searchValue || entrance.address.toLowerCase().includes(searchValue);
+            const percent = entrance.totalApartments ? (entrance.agreed / entrance.totalApartments) * 100 : 0;
+            const isReady = percent >= 50;
+            
+            if(filterStatus === 'ready') return addressMatch && isReady;
+            if(filterStatus === 'in-progress') return addressMatch && !isReady;
+            return addressMatch;
+        });
+        
+        if(entrances.length === 0) {
+            container.innerHTML = '<div class="no-data"><i class="fas fa-building"></i><p>Подъездов не найдено</p></div>';
+            return;
+        }
+        
+        container.innerHTML = entrances.map(entrance => {
+            const percent = entrance.totalApartments ? Math.round((entrance.agreed / entrance.totalApartments) * 100) : 0;
+            const isReady = percent >= 50;
+            const needed = entrance.totalApartments ? Math.ceil(entrance.totalApartments * 0.5) - entrance.agreed : 0;
+            
+            return `
+                <div class="entrance-card ${isReady ? 'ready' : ''}">
+                    <div class="card-header">
+                        <div>
+                            <h3>${escapeHtml(entrance.address)}</h3>
+                            <span class="entrance-number">Подъезд №${entrance.entrance}</span>
+                        </div>
+                        <span class="status-badge ${isReady ? 'ready' : 'progress'}">
+                            ${isReady ? '✅ Готов к установке' : '⏳ В процессе сбора'}
+                        </span>
+                    </div>
+                    <div class="progress-bar-container">
+                        <div class="progress-bar-bg">
+                            <div class="progress-bar-fill ${isReady ? 'ready' : 'in-progress'}" style="width: ${percent}%"></div>
+                        </div>
+                        <div class="progress-stats">
+                            <span class="current">${entrance.agreed} согласны</span>
+                            <span class="needed">Нужно еще: ${needed > 0 ? needed : 0}</span>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; display: flex; justify-content: space-between; font-size: 0.85rem; color: var(--text-muted);">
+                        <span><i class="fas fa-tag"></i> ${escapeHtml(entrance.tariff || 'Не выбран')}</span>
+                        <span><i class="fas fa-calendar"></i> ${entrance.lastUpdate || ''}</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+        
+    } catch(error) {
+        console.error('Error loading progress:', error);
+        container.innerHTML = '<div class="no-data"><i class="fas fa-exclamation-triangle"></i><p>Ошибка загрузки данных</p></div>';
+    }
+}
 
+// Обновление статистики в hero
+async function updateHeroStats(forceRefresh = false) {
+    const stats = await getDashboardStats(forceRefresh);
+    if(!stats) return;
+    
+    const totalBuildings = document.getElementById('total-buildings');
+    const totalApartments = document.getElementById('total-apartments');
+    const completedEntrances = document.getElementById('completed-entrances');
+    
+    if(totalBuildings) totalBuildings.textContent = stats.totalEntrances || 0;
+    if(totalApartments) {
+        // Считаем квартиры из подъездов
+        const entrances = await getEntrances();
+        const total = entrances.reduce((sum, e) => sum + (e.totalApartments || 0), 0);
+        totalApartments.textContent = total;
+    }
+    if(completedEntrances) completedEntrances.textContent = stats.readyEntrances || 0;
+}
+
+// Настройка формы
+function setupForm() {
+    const form = document.getElementById('application-form');
+    if(!form) return;
+    
+    // Маска телефона
+    const phoneInput = document.getElementById('phone');
+    if(phoneInput) {
+        phoneInput.addEventListener('input', (e) => {
+            let value = e.target.value.replace(/[^\d+]/g, '');
+            if(value.startsWith('7') || value.startsWith('8')) {
+                value = '+' + value;
+            }
+            e.target.value = value;
+        });
+    }
+    
+    // Предзаполнение тарифа из URL параметров
+    const urlParams = new URLSearchParams(window.location.search);
+    const tariffParam = urlParams.get('tariff');
+    if(tariffParam) {
+        const radio = document.querySelector(`input[value*="${tariffParam}"]`);
+        if(radio) radio.checked = true;
+    }
+    
+    // Обработка отправки
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const submitBtn = form.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Отправка...';
+        
+        const formData = {
+            address: form.address?.value,
+            entrance: form.entrance?.value,
+            apartment: form.apartment?.value,
+            totalApartments: document.getElementById('total-apartments-form')?.value,
+            tariff: getSelectedTariff(form),
+            consent: getSelectedConsent(form),
+            phone: form.phone?.value,
+            name: form.name?.value,
+            comment: form.comment?.value
+        };
+        
+        // Валидация
+        if(!formData.address || !formData.entrance || !formData.apartment || !formData.totalApartments || !formData.tariff || !formData.consent || !formData.phone) {
+            showToast('Заполните все обязательные поля', 'error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
+            return;
+        }
+        
+        const success = await submitApplication(formData);
+        
+        if(success) {
+            form.reset();
+            // Обновляем прогресс
+            await loadProgress(true);
+            await updateHeroStats(true);
+        }
+        
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = originalText;
+    });
+}
+
+function getSelectedTariff(form) {
+    const radios = form.querySelectorAll('input[name$="tariff"], input[name="entry.XXXXXXXX"]');
+    for(const radio of radios) {
+        if(radio.checked && radio.value) {
+            return radio.value;
+        }
+    }
+    return null;
+}
+
+function getSelectedConsent(form) {
+    const radios = form.querySelectorAll('input[value*="согласен"], input[value*="Думаю"]');
+    for(const radio of radios) {
+        if(radio.checked && radio.value) {
+            return radio.value;
+        }
+    }
+    return null;
+}
+
+// Слайдер
+function setupSlider() {
+    const track = document.getElementById('slider-track');
+    const prevBtn = document.getElementById('slider-prev');
+    const nextBtn = document.getElementById('slider-next');
+    const dotsContainer = document.getElementById('slider-dots');
+    
+    if(!track) return;
+    
+    let currentIndex = 0;
+    const slides = track.children;
+    const totalSlides = slides.length;
+    
+    function updateSlider() {
+        track.style.transform = `translateX(-${currentIndex * 100}%)`;
+        
+        // Обновляем dots
+        if(dotsContainer) {
+            const dots = dotsContainer.querySelectorAll('.slider-dot');
+            dots.forEach((dot, i) => {
+                if(i === currentIndex) {
+                    dot.classList.add('active');
+                } else {
+                    dot.classList.remove('active');
+                }
+            });
+        }
+    }
+    
+    function nextSlide() {
+        currentIndex = (currentIndex + 1) % totalSlides;
+        updateSlider();
+    }
+    
+    function prevSlide() {
+        currentIndex = (currentIndex - 1 + totalSlides) % totalSlides;
+        updateSlider();
+    }
+    
+    // Создаем dots
+    if(dotsContainer && totalSlides > 0) {
+        dotsContainer.innerHTML = '';
+        for(let i = 0; i < totalSlides; i++) {
+            const dot = document.createElement('button');
+            dot.classList.add('slider-dot');
+            if(i === 0) dot.classList.add('active');
+            dot.addEventListener('click', () => {
+                currentIndex = i;
+                updateSlider();
+            });
+            dotsContainer.appendChild(dot);
+        }
+    }
+    
+    if(prevBtn) prevBtn.addEventListener('click', prevSlide);
+    if(nextBtn) nextBtn.addEventListener('click', nextSlide);
+    
+    // Свайп для мобильных
+    let touchStartX = 0;
+    let touchEndX = 0;
+    
+    track.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+    });
+    
+    track.addEventListener('touchend', (e) => {
+        touchEndX = e.changedTouches[0].screenX;
+        if(touchEndX - touchStartX > 50) prevSlide();
+        if(touchStartX - touchEndX > 50) nextSlide();
+    });
+    
+    // Автопрокрутка
+    let autoInterval = setInterval(nextSlide, 5000);
+    
+    const sliderContainer = document.querySelector('.slider-container');
+    if(sliderContainer) {
+        sliderContainer.addEventListener('mouseenter', () => clearInterval(autoInterval));
+        sliderContainer.addEventListener('mouseleave', () => {
+            autoInterval = setInterval(nextSlide, 5000);
+        });
+    }
+}
+
+// Toast уведомления
+function showToast(message, type = 'info') {
+    const container = document.getElementById('toast-container');
+    if(!container) return;
+    
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.innerHTML = `
-        <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-        <span>${message}</span>
+        <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+        <span>${escapeHtml(message)}</span>
     `;
-
+    
     container.appendChild(toast);
-
+    
     setTimeout(() => {
-        toast.style.opacity = '0';
-        toast.style.transform = 'translateX(100%)';
+        toast.style.animation = 'toast-out 0.4s ease';
         setTimeout(() => toast.remove(), 400);
     }, 4000);
 }
+
+// Экранирование HTML
+function escapeHtml(text) {
+    if(!text) return '';
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Добавляем стиль для анимации ухода тоста
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes toast-out {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
